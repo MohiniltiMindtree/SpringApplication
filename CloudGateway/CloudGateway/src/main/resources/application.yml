@@ -1,0 +1,47 @@
+server:
+  port: 9092
+
+spring:
+  application:
+    name: GATEWAY-SERVICE
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: dominos-service
+          uri: lb://DOMINOS
+          predicates:
+            - Path=/dominos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: dominos-service
+                fallbackuri: forward:/dominosFallback
+
+        - id: zomato-service
+          uri: lb://ZOMATO
+          predicates:
+            - Path=/zomato/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: zomato-service
+                fallbackuri: forward:/zomatoFallback
+
+
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: 'true'
+    register-with-eureka: 'true'
+  instance:
+    hostname: localhost
